@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Live Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <title>Meal Manager Dashboard</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -21,7 +20,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         header {
@@ -30,6 +29,7 @@
         h1 { margin: 0 0 8px 0; font-size: 24px; }
         .meta-info { font-size: 14px; color: #64748b; }
         
+        /* Navigation System */
         .tabs {
             display: flex;
             gap: 8px;
@@ -54,38 +54,21 @@
             border-bottom-color: var(--primary);
         }
 
-        .loading {
-            padding: 40px;
-            text-align: center;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .table-container {
+        /* Seamless Spreadsheet Canvas Window */
+        .frame-wrapper {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 8px;
-            overflow-x: auto;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        table {
+            overflow: hidden;
             width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
+            height: 750px; /* Adjust height here if your sheets extend longer */
         }
-        th {
-            background-color: #f1f5f9;
-            padding: 12px 16px;
-            font-weight: 600;
-            border-bottom: 1px solid var(--border);
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #f8fafc; }
     </style>
 </head>
 <body>
@@ -98,108 +81,30 @@
 
     <div class="tabs" id="tab-headers"></div>
 
-    <div id="content-area">
-        <div class="loading">Select a tab to view up-to-date data...</div>
+    <div class="frame-wrapper">
+        <iframe id="sheet-frame" src="" title="Google Sheet Data View"></div>
     </div>
 </div>
 
 <script>
-    // CONFIGURATION: Customize how each individual tab processes your spreadsheet data
+    // CONFIGURATION: These are the direct Web Interactive HTML links for your specific sheet tabs
     const sheetTabs = {
-        "Meal Tracker": {
-            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=0&single=true&output=csv",
-            hasHeader: true,   
-            skipRows: 0,       
-            maxRows: 53       
-        },
-        "Bazar & Extra": {
-            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1749425604&single=true&output=csv",
-            hasHeader: false,  
-            skipRows: 1,       
-            maxRows: 59       
-        },
-        "Calculations": {
-            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1496868087&single=true&output=csv",
-            hasHeader: true,   
-            skipRows: 0,       
-            maxRows: 20        
-        }, // <--- FIXED: Added the comma here
-
-        "Basa Vara": {
-            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=56779445&single=true&output=csv",
-            hasHeader: true,   
-            skipRows: 3,       
-            maxRows: 16        
-        }
+        "Meal Tracker": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=0&single=true&widget=false&headers=false",
+        "Bazar & Extra": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=1749425604&single=true&widget=false&headers=false",
+        "Calculations": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=1496868087&single=true&widget=false&headers=false",
+        "Basa Vara": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=56779445&single=true&widget=false&headers=false"
     };
 
     const headersContainer = document.getElementById('tab-headers');
-    const contentArea = document.getElementById('content-area');
+    const sheetFrame = document.getElementById('sheet-frame');
 
-    function loadTabData(config) {
-        contentArea.innerHTML = '<div class="loading">Fetching live updates from Google Sheets...</div>';
-        
-        Papa.parse(config.url, {
-            download: true,
-            header: false, 
-            skipEmptyLines: true,
-            complete: function(results) {
-                let rawRows = results.data;
-                
-                if (!rawRows || rawRows.length === 0) {
-                    contentArea.innerHTML = '<div class="loading">No records found inside this tab.</div>';
-                    return;
-                }
-
-                if (config.skipRows > 0) {
-                    rawRows = rawRows.slice(config.skipRows);
-                }
-
-                if (config.maxRows && rawRows.length > config.maxRows) {
-                    rawRows = rawRows.slice(0, config.maxRows + (config.hasHeader ? 1 : 0));
-                }
-
-                if (rawRows.length === 0) {
-                    contentArea.innerHTML = '<div class="loading">No data available after applying filters.</div>';
-                    return;
-                }
-
-                let html = '<div class="table-container"><table>';
-                let startRowIndex = 0;
-
-                html += '<thead><tr>';
-                if (config.hasHeader) {
-                    rawRows[0].forEach(cell => {
-                        html += `<th>${escapeHTML(cell)}</th>`;
-                    });
-                    startRowIndex = 1; 
-                } else {
-                    rawRows[0].forEach((_, index) => {
-                        html += `<th>Column ${index + 1}</th>`;
-                    });
-                    startRowIndex = 0; 
-                }
-                html += '</tr></thead><tbody>';
-
-                for (let i = startRowIndex; i < rawRows.length; i++) {
-                    html += '<tr>';
-                    rawRows[i].forEach(cell => {
-                        html += `<td>${escapeHTML(cell)}</td>`;
-                    });
-                    html += '</tr>';
-                }
-                
-                html += '</tbody></table></div>';
-                contentArea.innerHTML = html;
-            },
-            error: function(err) {
-                contentArea.innerHTML = `<div class="loading" style="color: #ef4444;">Failed to sync data stream. Ensure the tab link is correct and published publicly.</div>`;
-                console.error(err);
-            }
-        });
+    // Changes the source target of the iframe viewport dynamically
+    function switchTab(url) {
+        sheetFrame.src = url;
     }
 
-    function initializeTabs() {
+    // Generate UI Controls and map state listeners
+    function initializeDashboard() {
         Object.keys(sheetTabs).forEach((tabName, index) => {
             const btn = document.createElement('button');
             btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
@@ -208,23 +113,19 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                loadTabData(sheetTabs[tabName]);
+                switchTab(sheetTabs[tabName]);
             });
             
             headersContainer.appendChild(btn);
             
+            // Auto-load initial tab space layout 
             if (index === 0) {
-                loadTabData(sheetTabs[tabName]);
+                switchTab(sheetTabs[tabName]);
             }
         });
     }
 
-    function escapeHTML(str) {
-        if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    initializeTabs();
+    initializeDashboard();
 </script>
 
 </body>

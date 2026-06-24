@@ -93,7 +93,7 @@
 <div class="container">
     <header>
         <h1 id="app-title">Meal Manager</h1>
-        <div class="meta-info">Real time updates on monthly meal information.Running Month - June.</div>
+        <div class="meta-info">Real time updates on monthly meal information. Running Month - June.</div>
     </header>
 
     <div class="tabs" id="tab-headers"></div>
@@ -108,28 +108,28 @@
     const sheetTabs = {
         "Meal Tracker": {
             url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=0&single=true&output=csv",
-            hasHeader: true,   // Uses the first row as a bold table header
-            skipRows: 0,       // Starts exactly at the beginning
-            maxRows: 53       // Shows everything
+            hasHeader: true,   
+            skipRows: 0,       
+            maxRows: 53       
         },
         "Bazar & Extra": {
             url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1749425604&single=true&output=csv",
-            hasHeader: false,  // Generates generic labels (Col 1, Col 2) so no data is cut off
+            hasHeader: false,  
             skipRows: 1,       
             maxRows: 59       
         },
         "Calculations": {
             url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1496868087&single=true&output=csv",
-            hasHeader: true,   // Treat the first row of your *selected part* as the header
-            skipRows: 0,       // Skips the first 5 rows of the sheet entirely
-            maxRows: 20        // Only grabs 10 rows of data after the skip point
-        }
+            hasHeader: true,   
+            skipRows: 0,       
+            maxRows: 20        
+        }, // <--- FIXED: Added the comma here
 
         "Basa Vara": {
             url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=56779445&single=true&output=csv",
-            hasHeader: true,   // Treat the first row of your *selected part* as the header
-            skipRows: 3,       // Skips the first 5 rows of the sheet entirely
-            maxRows: 16        // Only grabs 10 rows of data after the skip point
+            hasHeader: true,   
+            skipRows: 3,       
+            maxRows: 16        
         }
     };
 
@@ -151,12 +151,10 @@
                     return;
                 }
 
-                // 1. Cut off rows from the top if skipRows is set
                 if (config.skipRows > 0) {
                     rawRows = rawRows.slice(config.skipRows);
                 }
 
-                // 2. Limit the total number of data rows displayed
                 if (config.maxRows && rawRows.length > config.maxRows) {
                     rawRows = rawRows.slice(0, config.maxRows + (config.hasHeader ? 1 : 0));
                 }
@@ -169,23 +167,20 @@
                 let html = '<div class="table-container"><table>';
                 let startRowIndex = 0;
 
-                // 3. Render Header Row based on settings
                 html += '<thead><tr>';
                 if (config.hasHeader) {
                     rawRows[0].forEach(cell => {
                         html += `<th>${escapeHTML(cell)}</th>`;
                     });
-                    startRowIndex = 1; // Start the body loop from the next row
+                    startRowIndex = 1; 
                 } else {
-                    // Create generic column placeholders if no header row exists
                     rawRows[0].forEach((_, index) => {
                         html += `<th>Column ${index + 1}</th>`;
                     });
-                    startRowIndex = 0; // Start body loop from the very first available row
+                    startRowIndex = 0; 
                 }
                 html += '</tr></thead><tbody>';
 
-                // 4. Render Data Rows
                 for (let i = startRowIndex; i < rawRows.length; i++) {
                     html += '<tr>';
                     rawRows[i].forEach(cell => {

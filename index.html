@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Live Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 24px;
+        }
+        h1 { margin: 0 0 8px 0; font-size: 24px; }
+        .meta-info { font-size: 14px; color: #64748b; }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 16px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .loading {
+            padding: 40px;
+            text-align: center;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f1f5f9;
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="app-title">Meal Manager</h1>
+        <div class="meta-info">Real time updates on monthly meal information.Running Month - June.</div>
+    </header>
+
+    <div class="tabs" id="tab-headers"></div>
+
+    <div id="content-area">
+        <div class="loading">Select a tab to view up-to-date data...</div>
+    </div>
+</div>
+
+<script>
+    // CONFIGURATION: Customize how each individual tab processes your spreadsheet data
+    const sheetTabs = {
+        "Meal Tracker": {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=0&single=true&output=csv",
+            hasHeader: true,   // Uses the first row as a bold table header
+            skipRows: 0,       // Starts exactly at the beginning
+            maxRows: 53       // Shows everything
+        },
+        "Bazar & Extra": {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1749425604&single=true&output=csv",
+            hasHeader: false,  // Generates generic labels (Col 1, Col 2) so no data is cut off
+            skipRows: 1,       
+            maxRows: 59       
+        },
+        "Calculations": {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=1496868087&single=true&output=csv",
+            hasHeader: true,   // Treat the first row of your *selected part* as the header
+            skipRows: 0,       // Skips the first 5 rows of the sheet entirely
+            maxRows: 20        // Only grabs 10 rows of data after the skip point
+        }
+
+        "Basa Vara": {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pub?gid=56779445&single=true&output=csv",
+            hasHeader: true,   // Treat the first row of your *selected part* as the header
+            skipRows: 3,       // Skips the first 5 rows of the sheet entirely
+            maxRows: 16        // Only grabs 10 rows of data after the skip point
+        }
+    };
+
+    const headersContainer = document.getElementById('tab-headers');
+    const contentArea = document.getElementById('content-area');
+
+    function loadTabData(config) {
+        contentArea.innerHTML = '<div class="loading">Fetching live updates from Google Sheets...</div>';
+        
+        Papa.parse(config.url, {
+            download: true,
+            header: false, 
+            skipEmptyLines: true,
+            complete: function(results) {
+                let rawRows = results.data;
+                
+                if (!rawRows || rawRows.length === 0) {
+                    contentArea.innerHTML = '<div class="loading">No records found inside this tab.</div>';
+                    return;
+                }
+
+                // 1. Cut off rows from the top if skipRows is set
+                if (config.skipRows > 0) {
+                    rawRows = rawRows.slice(config.skipRows);
+                }
+
+                // 2. Limit the total number of data rows displayed
+                if (config.maxRows && rawRows.length > config.maxRows) {
+                    rawRows = rawRows.slice(0, config.maxRows + (config.hasHeader ? 1 : 0));
+                }
+
+                if (rawRows.length === 0) {
+                    contentArea.innerHTML = '<div class="loading">No data available after applying filters.</div>';
+                    return;
+                }
+
+                let html = '<div class="table-container"><table>';
+                let startRowIndex = 0;
+
+                // 3. Render Header Row based on settings
+                html += '<thead><tr>';
+                if (config.hasHeader) {
+                    rawRows[0].forEach(cell => {
+                        html += `<th>${escapeHTML(cell)}</th>`;
+                    });
+                    startRowIndex = 1; // Start the body loop from the next row
+                } else {
+                    // Create generic column placeholders if no header row exists
+                    rawRows[0].forEach((_, index) => {
+                        html += `<th>Column ${index + 1}</th>`;
+                    });
+                    startRowIndex = 0; // Start body loop from the very first available row
+                }
+                html += '</tr></thead><tbody>';
+
+                // 4. Render Data Rows
+                for (let i = startRowIndex; i < rawRows.length; i++) {
+                    html += '<tr>';
+                    rawRows[i].forEach(cell => {
+                        html += `<td>${escapeHTML(cell)}</td>`;
+                    });
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table></div>';
+                contentArea.innerHTML = html;
+            },
+            error: function(err) {
+                contentArea.innerHTML = `<div class="loading" style="color: #ef4444;">Failed to sync data stream. Ensure the tab link is correct and published publicly.</div>`;
+                console.error(err);
+            }
+        });
+    }
+
+    function initializeTabs() {
+        Object.keys(sheetTabs).forEach((tabName, index) => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+            btn.textContent = tabName;
+            
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadTabData(sheetTabs[tabName]);
+            });
+            
+            headersContainer.appendChild(btn);
+            
+            if (index === 0) {
+                loadTabData(sheetTabs[tabName]);
+            }
+        });
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    initializeTabs();
+</script>
+
+</body>
+</html>

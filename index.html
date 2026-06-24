@@ -29,7 +29,6 @@
         h1 { margin: 0 0 8px 0; font-size: 24px; }
         .meta-info { font-size: 14px; color: #64748b; }
         
-        /* Navigation System */
         .tabs {
             display: flex;
             gap: 8px;
@@ -54,7 +53,6 @@
             border-bottom-color: var(--primary);
         }
 
-        /* Seamless Spreadsheet Canvas Window */
         .frame-wrapper {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -62,7 +60,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
             width: 100%;
-            height: 750px; /* Adjust height here if your sheets extend longer */
+            height: 750px; 
         }
         iframe {
             width: 100%;
@@ -82,12 +80,10 @@
     <div class="tabs" id="tab-headers"></div>
 
     <div class="frame-wrapper">
-        <iframe id="sheet-frame" src="" title="Google Sheet Data View"></div>
-    </div>
+        <iframe id="sheet-frame" src="" title="Google Sheet Data View"></iframe> </div>
 </div>
 
 <script>
-    // CONFIGURATION: These are the direct Web Interactive HTML links for your specific sheet tabs
     const sheetTabs = {
         "Meal Tracker": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=0&single=true&widget=false&headers=false",
         "Bazar & Extra": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFYbS6wSRW4x6myxw2u3OvFUM_BoIrE08IJ_y89ErSRI7X99j-MnGZ_J6FgTaO8O3YOJ_YkXKUTiGP/pubhtml?gid=1749425604&single=true&widget=false&headers=false",
@@ -98,12 +94,10 @@
     const headersContainer = document.getElementById('tab-headers');
     const sheetFrame = document.getElementById('sheet-frame');
 
-    // Changes the source target of the iframe viewport dynamically
     function switchTab(url) {
         sheetFrame.src = url;
     }
 
-    // Generate UI Controls and map state listeners
     function initializeDashboard() {
         Object.keys(sheetTabs).forEach((tabName, index) => {
             const btn = document.createElement('button');
@@ -118,7 +112,6 @@
             
             headersContainer.appendChild(btn);
             
-            // Auto-load initial tab space layout 
             if (index === 0) {
                 switchTab(sheetTabs[tabName]);
             }
